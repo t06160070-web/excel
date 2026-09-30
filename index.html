@@ -8,7 +8,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
 
-    <title>廠區廢料包統計系統</title> 
+    <title>系統櫃廢料包每日過數系統</title> 
 
     <!-- 引入前端專用 Excel 處理套件 --> 
 
@@ -16,11 +16,73 @@
 
     <style> 
 
-        body { font-family: Arial, sans-serif; padding: 20px; } 
+        :root { --primary-color: #007bff; --success-color: #28a745; } 
 
-        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; } 
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background-color: #f8f9fa; color: #333; margin: 0; } 
 
-        button:hover { background-color: #0056b3; } 
+        h2 { text-align: center; color: #212529; margin-bottom: 20px; } 
+
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; } 
+
+        .form-group { margin-bottom: 15px; } 
+
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 16px; } 
+
+        input[type="date"] { width: 100%; padding: 10px; box-sizing: border-box; font-size: 16px; border: 1px solid #ced4da; border-radius: 4px; } 
+
+         
+
+        /* 廠區與機台輸入區 */ 
+
+        .factory-section { margin-top: 15px; border-left: 4px solid var(--primary-color); padding-left: 10px; } 
+
+        .factory-title { font-size: 18px; font-weight: bold; color: var(--primary-color); margin-bottom: 10px; } 
+
+        .machine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; } 
+
+        .machine-card { background: #f1f3f5; padding: 12px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; } 
+
+        .machine-name { font-size: 16px; font-weight: 500; } 
+
+         
+
+        /* 加減數字計數器 */ 
+
+        .counter-group { display: flex; align-items: center; gap: 8px; } 
+
+        .btn-counter { width: 40px; height: 40px; font-size: 20px; font-weight: bold; background: white; border: 1px solid #ced4da; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; } 
+
+        .btn-counter:active { background: #e9ecef; } 
+
+        .input-count { width: 50px; height: 38px; text-align: center; font-size: 16px; border: 1px solid #ced4da; border-radius: 4px; } 
+
+         
+
+        /* 功能按鈕 */ 
+
+        .btn-block { display: width; width: 100%; padding: 12px; font-size: 18px; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; } 
+
+        .btn-save { background-color: var(--success-color); } 
+
+        .btn-save:hover { background-color: #218838; } 
+
+        .btn-export { background-color: #6c757d; } 
+
+        .btn-export:hover { background-color: #5a6268; } 
+
+ 
+
+        /* 即時預覽表格 */ 
+
+        .table-responsive { overflow-x: auto; margin-top: 15px; } 
+
+        table { width: 100%; border-collapse: collapse; background: white; text-align: center; font-size: 14px; } 
+
+        table, th, td { border: 1px solid #dee2e6; } 
+
+        th, td { padding: 10px; min-width: 60px; } 
+
+        th { background-color: #e9ecef; font-weight: bold; } 
 
     </style> 
 
@@ -30,154 +92,470 @@
 
  
 
-    <h2>廠區廢料包統計表產生器</h2> 
+    <h2>🪵 系統櫃廢料包每日過數系統</h2> 
 
-    <p>更新：已補上 E4 的 Nesting 機台。點擊下方按鈕即可下載最新 Excel：</p> 
+ 
 
-     
+    <!-- 1. 資料輸入區域 --> 
 
-    <button onclick="exportToExcel()">匯出 最新系統櫃廢料統計表.xlsx</button> 
+    <div class="card"> 
+
+        <div class="form-group"> 
+
+            <label for="recordDate">記錄日期：</label> 
+
+            <input type="date" id="recordDate"> 
+
+        </div> 
+
+ 
+
+        <!-- E3 廠區 --> 
+
+        <div class="factory-section"> 
+
+            <div class="factory-title">E3 廠區</div> 
+
+            <div class="machine-grid"> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">330 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('E3_330', -1)">-</button> 
+
+                        <input type="number" id="E3_330" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('E3_330', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">380 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('E3_380', -1)">-</button> 
+
+                        <input type="number" id="E3_380" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('E3_380', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+            </div> 
+
+        </div> 
+
+ 
+
+        <!-- E4 廠區 --> 
+
+        <div class="factory-section"> 
+
+            <div class="factory-title">E4 廠區</div> 
+
+            <div class="machine-grid"> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">330 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('E4_330', -1)">-</button> 
+
+                        <input type="number" id="E4_330" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('E4_330', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">Nesting 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('E4_Nesting', -1)">-</button> 
+
+                        <input type="number" id="E4_Nesting" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('E4_Nesting', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">長青 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('E4_長青', -1)">-</button> 
+
+                        <input type="number" id="E4_長青" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('E4_長青', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+            </div> 
+
+        </div> 
+
+ 
+
+        <!-- W8 廠區 --> 
+
+        <div class="factory-section"> 
+
+            <div class="factory-title">W8 廠區</div> 
+
+            <div class="machine-grid"> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">330 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('W8_330', -1)">-</button> 
+
+                        <input type="number" id="W8_330" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('W8_330', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">Nesting 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('W8_Nesting', -1)">-</button> 
+
+                        <input type="number" id="W8_Nesting" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('W8_Nesting', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+                <div class="machine-card"> 
+
+                    <span class="machine-name">邰展 機台</span> 
+
+                    <div class="counter-group"> 
+
+                        <button class="btn-counter" onclick="step('W8_邰展', -1)">-</button> 
+
+                        <input type="number" id="W8_邰展" class="input-count" value="0" min="0"> 
+
+                        <button class="btn-counter" onclick="step('W8_邰展', 1)">+</button> 
+
+                    </div> 
+
+                </div> 
+
+            </div> 
+
+        </div> 
+
+ 
+
+        <button class="btn-block btn-save" onclick="saveTodayData()">💾 儲存今日數據</button> 
+
+    </div> 
+
+ 
+
+    <!-- 2. 即時歷史數據與匯出區域 --> 
+
+    <div class="card"> 
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"> 
+
+            <span style="font-size: 18px; font-weight: bold;">歷史記錄總覽</span> 
+
+            <button class="btn-block btn-export" style="width: auto; margin: 0; padding: 8px 16px; font-size: 15px;" onclick="exportToExcel()">綠色按鈕：匯出 Excel</button> 
+
+        </div> 
+
+         
+
+        <div class="table-responsive"> 
+
+            <table id="previewTable"> 
+
+                <thead> 
+
+                    <tr> 
+
+                        <th rowspan="3">日期</th> 
+
+                        <th colspan="8">廢料</th> 
+
+                    </tr> 
+
+                    <tr> 
+
+                        <th colspan="2">E3</th> 
+
+                        <th colspan="3">E4</th> 
+
+                        <th colspan="3">W8</th> 
+
+                    </tr> 
+
+                    <tr> 
+
+                        <th>330</th><th>380</th> 
+
+                        <th>330</th><th>Nesting</th><th>長青</th> 
+
+                        <th>330</th><th>Nesting</th><th>邰展</th> 
+
+                    </tr> 
+
+                </thead> 
+
+                <tbody id="tableBody"> 
+
+                    <!-- 數據會動態新增到這裡 --> 
+
+                </tbody> 
+
+            </table> 
+
+        </div> 
+
+    </div> 
 
  
 
     <script> 
 
-    // 1. 重新核對後的完整機台配置（總共 8 台機台） 
+    // 欄位設定順序 
 
-    const columnsConfig = [ 
+    const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展']; 
 
-        { factory: 'E3', machine: '330' }, 
+     
 
-        { factory: 'E3', machine: '380' }, 
+    // 用於儲存多天數據的陣列 
 
-         
-
-        { factory: 'E4', machine: '330' }, 
-
-        { factory: 'E4', machine: 'Nesting' }, // 補回 Nesting 
-
-        { factory: 'E4', machine: '長青' },    // 保留 長青 
-
-         
-
-        { factory: 'W8', machine: '330' }, 
-
-        { factory: 'W8', machine: 'Nesting' }, 
-
-        { factory: 'W8', machine: '邰展' } 
-
-    ]; 
+    let historyDatabase = []; 
 
  
 
-    // 2. 模擬現場收集到的每日廢料包數量資料 
+    // 初始化：自動將日期設定為今天 
 
-    const mockData = [ 
-
-        { date: 1, factory: 'E3', machine: '330', count: 5 }, 
-
-        { date: 1, factory: 'E3', machine: '380', count: 3 }, 
-
-        { date: 1, factory: 'E4', machine: '330', count: 2 }, 
-
-        { date: 1, factory: 'E4', machine: 'Nesting', count: 4 }, 
-
-        { date: 1, factory: 'E4', machine: '長青', count: 6 }, 
-
-        { date: 1, factory: 'W8', machine: '330', count: 4 }, 
-
-        { date: 1, factory: 'W8', machine: 'Nesting', count: 1 }, 
-
-        { date: 1, factory: 'W8', machine: '邰展', count: 3 }, 
-
-         
-
-        { date: 2, factory: 'E4', machine: 'Nesting', count: 7 }, 
-
-        { date: 2, factory: 'W8', machine: '邰展', count: 5 } 
-
-    ]; 
+    document.getElementById('recordDate').valueAsDate = new Date(); 
 
  
 
-    function exportToExcel() { 
+    // 點擊計數器加減的功能 
 
-        const wb = XLSX.utils.book_new(); 
+    function step(id, val) { 
 
-         
+        const input = document.getElementById(id); 
 
-        // 準備 Excel 每一列的文字結構（總共 9 欄：A欄到I欄） 
+        let current = parseInt(input.value) || 0; 
 
-        const wsData = [ 
+        current += val; 
 
-            ['日期', '廢料', '', '', '', '', '', '', ''],                             // 第一列 (大標題) 
+        if (current < 0) current = 0; 
 
-            ['', 'E3', '', 'E4', '', '', 'W8', '', ''],                              // 第二列 (廠區橫跨格數) 
+        input.value = current; 
 
-            ['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展']     // 第三列 (所有機台) 
-
-        ]; 
+    } 
 
  
 
-        // 3. 填入 1 到 4 日的統計數據 
+    // 儲存當天數據到暫存資料庫 
 
-        for (let d = 1; d <= 4; d++) { 
+    function saveTodayData() { 
 
-            const row = [d]; // 開頭是日期 
+        const dateInput = document.getElementById('recordDate').value; 
 
-             
+        if (!dateInput) { 
 
-            // 依序比對 8 台機台在該日期有沒有數據 
+            alert('請先選擇日期！'); 
 
-            columnsConfig.forEach(cfg => { 
-
-                const match = mockData.find(item => item.date === d && item.factory === cfg.factory && item.machine === cfg.machine); 
-
-                row.push(match ? match.count : ''); // 有數據就填，沒數據就留白 
-
-            }); 
-
-             
-
-            wsData.push(row); 
+            return; 
 
         } 
 
  
 
-        const ws = XLSX.utils.aoa_to_sheet(wsData); 
+        // 格式化日期只顯示「日」或者「月/日」 
+
+        const dateObj = new Date(dateInput); 
+
+        const dayString = `${dateObj.getDate()}日`; 
 
  
 
-        // 4. 精準設定跨欄合併 (Merges) - 配合 8 台機台的寬度 
-
-        ws['!merges'] = [ 
-
-            { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, // 「廢料」大標題合併 (B1:I1) -> 橫跨 8 格 
-
-            { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, // 「E3」廠區合併 (B2:C2) -> 橫跨 2 格 (330, 380) 
-
-            { s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, // 「E4」廠區合併 (D2:F2) -> 橫跨 3 格 (330, Nesting, 長青) 
-
-            { s: { r: 1, c: 6 }, e: { r: 1, c: 8 } }  // 「W8」廠區合併 (G2:I2) -> 橫跨 3 格 (330, Nesting, 邰展) 
-
-        ]; 
+        // 檢查是否已經有同日期的資料，有就覆蓋，沒有就新增 
 
  
 
-        XLSX.utils.book_append_sheet(wb, ws, '工作表1'); 
+const existingIndex = historyDatabase.findIndex(item => item.date === dayString); 
+
+const currentDayData = { date: dayString }; 
+
+keys.forEach(key => { 
+
+const val = parseInt(document.getElementById(key).value) || 0; 
+
+currentDayData[key] = val === 0 ? '' : val; // 0 包就留白不顯示，跟手繪圖一樣 
+
+}); 
+
+if (existingIndex > -1) { 
+
+historyDatabase[existingIndex] = currentDayData; 
+
+} else { 
+
+historyDatabase.push(currentDayData); 
+
+} 
+
+// 依照日期排序 
+
+historyDatabase.sort((a, b) => parseInt(a.date) - parseInt(b.date)); 
+
+// 更新網頁上的表格畫面 
+
+renderTable(); 
+
+// 歸零輸入欄位，方便明天或下一筆輸入 
+
+keys.forEach(key => document.getElementById(key).value = 0); 
+
+alert(${dayString} 的數據已儲存！可於下方表格預覽。); 
+
+} 
+
+// 將資料呈現到網頁表格中 
+
+function renderTable() { 
+
+const tbody = document.getElementById('tableBody'); 
+
+tbody.innerHTML = ''; 
+
+historyDatabase.forEach(item => { 
+
+const tr = document.createElement('tr'); 
+
+// 日期欄 
+
+const tdDate = document.createElement('td'); 
+
+tdDate.innerText = item.date; 
+
+tr.appendChild(tdDate); 
+
+// 各機台數量欄 
+
+keys.forEach(key => { 
+
+const td = document.createElement('td'); 
+
+td.innerText = item[key]; 
+
+tr.appendChild(td); 
+
+}); 
+
+tbody.appendChild(tr); 
+
+}); 
+
+} 
+
+// 核心功能：點擊按鈕直接打包下載 Excel 檔案 
+
+function exportToExcel() { 
+
+if (historyDatabase.length === 0) { 
+
+alert('目前還沒有任何記錄數據可以匯出喔！'); 
+
+return; 
+
+} 
+
+const wb = XLSX.utils.book_new(); 
+
+// 完美還原您手繪圖的 Excel 三層表頭架構 
+
+const wsData = [ 
+
+['日期', '廢料', '', '', '', '', '', '', ''], // 第一列 (Row 2 大標題) 
+
+['', 'E3', '', 'E4', '', '', 'W8', '', ''], // 第二列 (Row 3 廠區) 
+
+['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展'] // 第三列 (Row 4 所有機台) 
+
+]; 
+
+// 讀取資料庫內每一天的資料加入 Excel 
+
+historyDatabase.forEach(item => { 
+
+const row = [item.date]; 
+
+keys.forEach(key => { 
+
+row.push(item[key]); 
+
+}); 
+
+wsData.push(row); 
+
+}); 
+
+const ws = XLSX.utils.aoa_to_sheet(wsData); 
+
+// 精準設定儲存格跨欄合併機制 (對應 8 台機台寬度) 
+
+ws['!merges'] = [ 
+
+{ s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, // 「廢料」大標題合併 (B1:I1) 
+
+{ s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, // 「E3」廠區合併 (B2:C2) -> 橫跨 2 台 (330, 380) 
+
+{ s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, // 「E4」廠區合併 (D2:F2) -> 橫跨 3 台 (330, Nesting, 長青) 
+
+{ s: { r: 1, c: 6 }, e: { r: 1, c: 8 } } // 「W8」廠區合併 (G2:I2) -> 橫跨 3 台 (330, Nesting, 邰展) 
+
+]; 
+
+XLSX.utils.book_append_sheet(wb, ws, '工作表1'); 
+
+// 自動下載檔案 
+
+XLSX.writeFile(wb, '系統櫃廢料統計表_每日更新版.xlsx'); 
+
+} 
 
  
-
-        // 5. 執行下載 
-
-        XLSX.writeFile(wb, '系統櫃廢料統計表_修正版.xlsx'); 
-
-    } 
-
-    </script> 
-
-</body> 
-
-</html> 
