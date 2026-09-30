@@ -2,64 +2,82 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>系統櫃廢料統計系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>系統櫃廢料統計系統(手機版)</title>
     <!-- 引入 Excel 處理套件 -->
     <script src="https://jsdelivr.net"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f8f9fa; }
-        .box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; }
-        input[type="number"] { width: 60px; padding: 5px; font-size: 16px; text-align: center; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-top: 10px; margin-right: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: center; }
-        th, td { border: 1px solid #333; padding: 8px; }
-        th { background-color: #e9ecef; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 10px; background-color: #f1f3f5; margin: 0; }
+        h2 { text-align: center; margin: 15px 0; font-size: 20px; color: #212529; }
+        .box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .factory-title { font-size: 18px; font-weight: bold; color: #007bff; border-left: 5px solid #007bff; padding-left: 8px; margin: 15px 0 10px 0; }
+        .machine-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+        .machine-name { font-size: 16px; font-weight: bold; }
+        .counter { display: flex; align-items: center; gap: 5px; }
+        .btn-step { width: 45px; height: 45px; font-size: 22px; font-weight: bold; background: white; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-step:active { background: #e9ecef; }
+        .num-input { width: 50px; height: 41px; text-align: center; font-size: 18px; font-weight: bold; border: 1px solid #ced4da; border-radius: 6px; }
+        .action-btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .table-wrap { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
+        th, td { border: 1px solid #aaa; padding: 6px; min-width: 45px; }
+        th { background-color: #e9ecef; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2>🪵 系統櫃廢料包每日過數系統 (自動儲存版)</h2>
+    <h2>🪵 廠區廢料每日過數 (手機專用版)</h2>
     
     <div class="box">
-        日期：<input type="date" id="recordDate"><br><br>
-        <strong>E3 廠區：</strong>
-        330 <input type="number" id="E3_330" value="0"> | 
-        380 <input type="number" id="E3_380" value="0"><br><br>
+        <label style="font-weight:bold; font-size:16px;">選擇日期：</label>
+        <input type="date" id="recordDate" style="width:100%; padding:10px; font-size:16px; box-sizing:border-box; border-radius:6px; border:1px solid #ced4da; margin-top:5px;"><br>
+
+        <div class="factory-title">E3 廠區</div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('E3_330',-1)">-</button><input type="number" id="E3_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E3_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">380 機台</span><div class="counter"><button class="btn-step" onclick="step('E3_380',-1)">-</button><input type="number" id="E3_380" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E3_380',1)">+</button></div></div>
         
-        <strong>E4 廠區：</strong>
-        330 <input type="number" id="E4_330" value="0"> | 
-        Nesting <input type="number" id="E4_Nesting" value="0"> | 
-        長青 <input type="number" id="E4_長青" value="0"><br><br>
+        <div class="factory-title">E4 廠區</div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('E4_330',-1)">-</button><input type="number" id="E4_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('E4_Nesting',-1)">-</button><input type="number" id="E4_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_Nesting',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">長青 機台</span><div class="counter"><button class="btn-step" onclick="step('E4_長青',-1)">-</button><input type="number" id="E4_長青" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_長青',1)">+</button></div></div>
         
-        <strong>W8 廠區：</strong>
-        330 <input type="number" id="W8_330" value="0"> | 
-        Nesting <input type="number" id="W8_Nesting" value="0"> | 
-        邰展 <input type="number" id="W8_邰展" value="0"><br><br>
+        <div class="factory-title">W8 廠區</div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_330',-1)">-</button><input type="number" id="W8_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('W8_Nesting',-1)">-</button><input type="number" id="W8_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_Nesting',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">邰展 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_邰展',-1)">-</button><input type="number" id="W8_邰展" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_邰展',1)">+</button></div></div>
         
-        <button onclick="saveTodayData()" style="background-color: #28a745; color: white; border: none; border-radius: 4px;">💾 儲存今日數據</button>
-        <button onclick="exportToExcel()" style="background-color: #17a2b8; color: white; border: none; border-radius: 4px;">🟢 匯出 Excel 檔</button>
-        <button onclick="clearDatabase()" style="background-color: #dc3545; color: white; border: none; border-radius: 4px;">⚠️ 清除所有歷史記錄</button>
+        <button class="action-btn" style="background-color:#28a745;" onclick="saveTodayData()">💾 儲存今日數據</button>
+        <button class="action-btn" style="background-color:#17a2b8;" onclick="exportToExcel()">🟢 匯出 Excel 檔案</button>
+        <button class="action-btn" style="background-color:#dc3545; padding:8px; font-size:14px; margin-top:20px;" onclick="clearDatabase()">⚠️ 清除所有歷史記錄</button>
     </div>
 
     <div class="box">
-        <h3>歷史記錄預覽 (已儲存於瀏覽器中)</h3>
-        <table>
-            <thead>
-                <tr><th rowspan="3">日期</th><th colspan="8">廢料</th></tr>
-                <tr><th colspan="2">E3</th><th colspan="3">E4</th><th colspan="3">W8</th></tr>
-                <tr><th>330</th><th>380</th><th>330</th><th>Nesting</th><th>長青</th><th>330</th><th>Nesting</th><th>邰展</th></tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        <h3 style="margin-top:0; font-size:16px;">歷史記錄預覽 (左右滑動觀看)</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th rowspan="3">日期</th><th colspan="8">廢料</th></tr>
+                    <tr><th colspan="2">E3</th><th colspan="3">E4</th><th colspan="3">W8</th></tr>
+                    <tr><th>330</th><th>380</th><th>330</th><th>Nesting</th><th>長青</th><th>330</th><th>Nesting</th><th>邰展</th></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
-    <script>
+        <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
-    
-    // 【核心修正】：每次打開網頁時，自動去讀取以前存下來的歷史記錄
     let db = JSON.parse(localStorage.getItem('waste_db')) || []; 
     
     document.getElementById('recordDate').valueAsDate = new Date();
-    
-    // 打開網頁時先自動畫出之前的表格
     renderTable();
+
+    // 手機專用：點擊大按鈕加減數字功能
+    function step(id, val) {
+        const input = document.getElementById(id);
+        let current = parseInt(input.value) || 0;
+        current += val;
+        if (current < 0) current = 0;
+        input.value = current;
+    }
 
     // 儲存當天數據
     function saveTodayData() {
@@ -77,15 +95,14 @@
         if (idx > -1) db[idx] = currentData; else db.push(currentData);
         db.sort((a, b) => parseInt(a.date) - parseInt(b.date));
 
-        // 【核心修正】：將更新後的資料永久存入手機/電腦中
         localStorage.setItem('waste_db', JSON.stringify(db));
-
         renderTable();
+        
+        // 儲存後數據歸零，方便點選下一台
         keys.forEach(k => document.getElementById(k).value = 0);
-        alert(dayStr + ' 數據已儲存，網頁關掉也不會遺失！');
+        alert(dayStr + ' 數據已儲存！');
     }
 
-    // 畫出表格畫面
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -97,21 +114,18 @@
         });
     }
 
-    // 【新增功能】：提供一個按鈕讓您在月底匯出後，可以把全部舊資料清空，重新開始新的一月
     function clearDatabase() {
         if (confirm('確定要清空所有歷史記錄嗎？清空後將無法復原喔！')) {
             db = [];
             localStorage.removeItem('waste_db');
             renderTable();
-            alert('歷史記錄已全數清空！');
+            alert('歷史記錄已清空！');
         }
     }
 
-    // 匯出成 Excel 檔案
     function exportToExcel() {
         if (db.length === 0) return alert('目前沒有數據可以匯出喔！');
         const wb = XLSX.utils.book_new();
-        
         const wsData = [
             ['日期', '廢料', '', '', '', '', '', '', ''],
             ['', 'E3', '', 'E4', '', '', 'W8', '', ''],
@@ -125,7 +139,6 @@
         });
         
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        
         ws['!merges'] = [
             { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, 
             { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, 
@@ -139,3 +152,4 @@
     </script>
 </body>
 </html>
+
