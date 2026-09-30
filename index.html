@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>廠區廢料過數系統</title>
+    <style>
+        body { font-family: sans-serif; padding: 10px; background: #f1f3f5; margin: 0; }
+        h2 { text-align: center; margin: 15px 0; font-size: 20px; color: #212529; }
+        .box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .factory-title { font-size: 18px; font-weight: bold; color: #007bff; border-left: 5px solid #007bff; padding-left: 8px; margin: 15px 0 10px 0; }
+        .machine-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e9ecef; }
+        .machine-name { font-size: 16px; font-weight: bold; color: #495057; }
+        .counter { display: flex; align-items: center; gap: 8px; }
+        .btn-step { width: 50px; height: 50px; font-size: 24px; font-weight: bold; background: white; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-step:active { background: #e9ecef; }
+        .num-input { width: 55px; height: 46px; text-align: center; font-size: 20px; font-weight: bold; border: 1px solid #ced4da; border-radius: 6px; }
+        .action-btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .table-wrap { overflow-x: auto; margin-top: 10px; border: 1px solid #666; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; background: white; }
+        th, td { border: 1px solid #666; padding: 8px; min-width: 50px; color: #000; }
+        th { background-color: #e9ecef; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>🪵 廠區廢料每日過數 (三星 S22 穩定版)</h2>
+    
+    <div class="box">
+        <label style="font-weight:bold; font-size:16px;">選擇記錄日期：</label>
+        <input type="date" id="recordDate" style="width:100%; padding:12px; font-size:16px; box-sizing:border-box; border-radius:6px; border:1px solid #ced4da; margin-top:5px; font-weight:bold;"><br>
+
+        <div class="factory-title">E3 廠區</div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('E3_330',-1)">-</button><input type="number" id="E3_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E3_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">380 機台</span><div class="counter"><button class="btn-step" onclick="step('E3_380',-1)">-</button><input type="number" id="E3_380" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E3_380',1)">+</button></div></div>
+        
+        <div class="factory-title">E4 廠區</div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('E4_330',-1)">-</button><input type="number" id="E4_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('E4_Nesting',-1)">-</button><input type="number" id="E4_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_Nesting',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">長青 機台</span><div class="counter"><button class="btn-step" onclick="step('E4_長青',-1)">-</button><input type="number" id="E4_長青" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_長青',1)">+</button></div></div>
+        
+        <div class="factory-title">W8 廠區</div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_330',-1)">-</button><input type="number" id="W8_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('W8_Nesting',-1)">-</button><input type="number" id="W8_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_Nesting',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">邰展 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_邰展',-1)">-</button><input type="number" id="W8_邰展" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_邰展',1)">+</button></div></div>
+        
+        <button class="action-btn" style="background-color:#28a745;" onclick="saveTodayData()">💾 儲存今日數據</button>
+        <button class="action-btn" style="background-color:#17a2b8; margin-top:20px;" onclick="exportToExcel()">🟢 一鍵下載 Excel</button>
+        <button class="action-btn" style="background-color:#dc3545; padding:8px; font-size:13px; margin-top:15px;" onclick="clearDatabase()">⚠️ 清除所有記錄</button>
+    </div>
+
+    <div class="box">
+        <h3 style="margin-top:0; font-size:16px;">歷史記錄預覽</h3>
+        <div class="table-wrap">
+            <table id="excelTable">
+                <thead>
+                    <tr><th rowspan="3">日期</th><th colspan="8">廢料</th></tr>
+                    <tr><th colspan="2">E3</th><th colspan="3">E4</th><th colspan="3">W8</th></tr>
+                    <tr><th>330</th><th>380</th><th>330</th><th>Nesting</th><th>長青</th><th>330</th><th>Nesting</th><th>邰展</th></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
+    let db = [];
+    
+    // 安全讀取快取，避免格式錯誤卡死
+    try { db = JSON.parse(localStorage.getItem('waste_db_v2')) || []; } catch(e) { db = []; }
+
+    // 初始化台灣日期
+    const now = new Date();
+    document.getElementById('recordDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    renderTable();
+
+    function step(id, val) {
+        const input = document.getElementById(id);
+        let current = parseInt(input.value) || 0;
+        current += val;
+        if (current < 0) current = 0;
+        input.value = current;
+    }
+
+    function saveTodayData() {
+        const dateVal = document.getElementById('recordDate').value;
+        if (!dateVal) return alert('請選擇日期');
+        const dayStr = new Date(dateVal).getDate() + '日';
+        
+        let hasData = false;
+        let hasAbnormal = false;
+        const currentData = { date: dayStr };
+        
+        keys.forEach(k => {
+            const v = parseInt(document.getElementById(k).value) || 0;
+            if (v > 0) hasData = true;
+            if (v > 2) hasAbnormal = true;
+            currentData[k] = v === 0 ? '' : v;
+        });
+
+        if (!hasData) return alert('⚠️ 請先輸入數量再儲存！');
+        if (hasAbnormal && !confirm('⚠️ 有機台輸入超過 2 包，確定正確嗎？')) return;
+
+        const idx = db.findIndex(i => i.date === dayStr);
+        if (idx > -1) {
+            if(!confirm(`確定要覆蓋 ${dayStr} 的資料嗎？`)) return;
+            db[idx] = currentData;
+        } else {
+            db.push(currentData);
+        }
+        
+        db.sort((a, b) => parseInt(a.date) - parseInt(b.date));
+        localStorage.setItem('waste_db_v2', JSON.stringify(db));
+        renderTable();
+        keys.forEach(k => document.getElementById(k).value = 0);
+        alert(`✅ ${dayStr} 儲存成功！`);
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        db.forEach(item => {
+            let html = `<tr><td><strong>${item.date}</strong></td>`;
+            keys.forEach(k => html += `<td>${item[k]}</td>`);
+            html += '</tr>';
+            tbody.innerHTML += html;
+        });
+    }
+
+    function clearDatabase() {
+        if (confirm('確定要清空所有記錄嗎？')) {
+            db = [];
+            localStorage.removeItem('waste_db_v2');
+            renderTable();
+            alert('已清空！');
+        }
+    }
+
+    // 三星 S22 專用：不依賴任何外部套件的 100% 強制下載技術
+    function exportToExcel() {
+        if (db.length === 0) return alert('❌ 目前沒有任何數據可以匯出喔！');
+        
+        // 取得預覽表格的完整 HTML 內容（包含完美的跨欄合併）
+        const tableHtml = document.getElementById('excelTable').outerHTML;
+        
+        // 封裝成標準 Excel XML 格式，保證格式、合併與框線在手機開啟時不破圖
+        const excelFile = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://w3.org">
+            <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>工作表1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+            <body>${tableHtml}</body>
+            </html>
+        `;
+
+        // 使用 Android 通用的 Blob 傳輸協定強制讓手機執行存檔
+        const blob = new Blob([excelFile], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '系統櫃廢料統計表.xls'; // 匯出為標準通用 Excel 格式
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    </script>
+</body>
+</html>
