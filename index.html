@@ -63,7 +63,7 @@
             </table>
         </div>
     </div>
-     <script>
+        <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
     let db = JSON.parse(localStorage.getItem('waste_db')) || []; 
     
@@ -145,7 +145,7 @@
         }
     }
 
-    // 【升級版匯出邏輯】
+    // 專為 Android / 三星 S22 優化的強制匯出 Excel 邏輯
     function exportToExcel() {
         if (db.length === 0) return alert('❌ 目前沒有任何歷史數據可以匯出喔！請先輸入並儲存數據。');
         
@@ -172,15 +172,24 @@
             ];
             
             XLSX.utils.book_append_sheet(wb, ws, '工作表1');
+            
+            // 使用內建寫檔，若被手機阻擋，將觸發 catch 救援機制
             XLSX.writeFile(wb, '系統櫃廢料統計表.xlsx');
             
         } catch (error) {
-            // 【備用救援機制】：若手機環境封鎖下載，直接彈出文字給人員複製發 LINE
-            let textBackup = "【系統櫃廢料統計文字備份】\n日期 | E3(330,380) | E4(330,Nest,長青) | W8(330,Nest,邰展)\n";
-            db.forEach(item => {
-                textBackup += `${item.date}: [${item.E3_330||0},${item.E3_380||0}] [${item.E4_330||0},${item.E4_Nesting||0},${item.E4_長青||0}] [${item.W8_330||0},${item.W8_Nesting||0},${item.W8_邰展||0}]\n`;
-            });
-            alert("💡 由於目前手機瀏覽器限制無法直接下載檔案，已為您將資料轉換為文字，請複製以下內容至 LINE 傳送：\n\n" + textBackup);
+            // 【Android/三星救援機制】：把檔案轉成實體連結強制下載
+            const u8 = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([u8], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            
+            // 建立一個隱藏按鈕強制觸發 Chrome 下載
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '系統櫃廢料統計表.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     }
     </script>
