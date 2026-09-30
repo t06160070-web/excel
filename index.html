@@ -1,0 +1,183 @@
+<!DOCTYPE html> 
+
+<html lang="zh-TW"> 
+
+<head> 
+
+    <meta charset="UTF-8"> 
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
+    <title>廠區廢料包統計系統</title> 
+
+    <!-- 引入前端專用 Excel 處理套件 --> 
+
+    <script src="https://jsdelivr.net"></script> 
+
+    <style> 
+
+        body { font-family: Arial, sans-serif; padding: 20px; } 
+
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; } 
+
+        button:hover { background-color: #0056b3; } 
+
+    </style> 
+
+</head> 
+
+<body> 
+
+ 
+
+    <h2>廠區廢料包統計表產生器</h2> 
+
+    <p>更新：已補上 E4 的 Nesting 機台。點擊下方按鈕即可下載最新 Excel：</p> 
+
+     
+
+    <button onclick="exportToExcel()">匯出 最新系統櫃廢料統計表.xlsx</button> 
+
+ 
+
+    <script> 
+
+    // 1. 重新核對後的完整機台配置（總共 8 台機台） 
+
+    const columnsConfig = [ 
+
+        { factory: 'E3', machine: '330' }, 
+
+        { factory: 'E3', machine: '380' }, 
+
+         
+
+        { factory: 'E4', machine: '330' }, 
+
+        { factory: 'E4', machine: 'Nesting' }, // 補回 Nesting 
+
+        { factory: 'E4', machine: '長青' },    // 保留 長青 
+
+         
+
+        { factory: 'W8', machine: '330' }, 
+
+        { factory: 'W8', machine: 'Nesting' }, 
+
+        { factory: 'W8', machine: '邰展' } 
+
+    ]; 
+
+ 
+
+    // 2. 模擬現場收集到的每日廢料包數量資料 
+
+    const mockData = [ 
+
+        { date: 1, factory: 'E3', machine: '330', count: 5 }, 
+
+        { date: 1, factory: 'E3', machine: '380', count: 3 }, 
+
+        { date: 1, factory: 'E4', machine: '330', count: 2 }, 
+
+        { date: 1, factory: 'E4', machine: 'Nesting', count: 4 }, 
+
+        { date: 1, factory: 'E4', machine: '長青', count: 6 }, 
+
+        { date: 1, factory: 'W8', machine: '330', count: 4 }, 
+
+        { date: 1, factory: 'W8', machine: 'Nesting', count: 1 }, 
+
+        { date: 1, factory: 'W8', machine: '邰展', count: 3 }, 
+
+         
+
+        { date: 2, factory: 'E4', machine: 'Nesting', count: 7 }, 
+
+        { date: 2, factory: 'W8', machine: '邰展', count: 5 } 
+
+    ]; 
+
+ 
+
+    function exportToExcel() { 
+
+        const wb = XLSX.utils.book_new(); 
+
+         
+
+        // 準備 Excel 每一列的文字結構（總共 9 欄：A欄到I欄） 
+
+        const wsData = [ 
+
+            ['日期', '廢料', '', '', '', '', '', '', ''],                             // 第一列 (大標題) 
+
+            ['', 'E3', '', 'E4', '', '', 'W8', '', ''],                              // 第二列 (廠區橫跨格數) 
+
+            ['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展']     // 第三列 (所有機台) 
+
+        ]; 
+
+ 
+
+        // 3. 填入 1 到 4 日的統計數據 
+
+        for (let d = 1; d <= 4; d++) { 
+
+            const row = [d]; // 開頭是日期 
+
+             
+
+            // 依序比對 8 台機台在該日期有沒有數據 
+
+            columnsConfig.forEach(cfg => { 
+
+                const match = mockData.find(item => item.date === d && item.factory === cfg.factory && item.machine === cfg.machine); 
+
+                row.push(match ? match.count : ''); // 有數據就填，沒數據就留白 
+
+            }); 
+
+             
+
+            wsData.push(row); 
+
+        } 
+
+ 
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData); 
+
+ 
+
+        // 4. 精準設定跨欄合併 (Merges) - 配合 8 台機台的寬度 
+
+        ws['!merges'] = [ 
+
+            { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, // 「廢料」大標題合併 (B1:I1) -> 橫跨 8 格 
+
+            { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, // 「E3」廠區合併 (B2:C2) -> 橫跨 2 格 (330, 380) 
+
+            { s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, // 「E4」廠區合併 (D2:F2) -> 橫跨 3 格 (330, Nesting, 長青) 
+
+            { s: { r: 1, c: 6 }, e: { r: 1, c: 8 } }  // 「W8」廠區合併 (G2:I2) -> 橫跨 3 格 (330, Nesting, 邰展) 
+
+        ]; 
+
+ 
+
+        XLSX.utils.book_append_sheet(wb, ws, '工作表1'); 
+
+ 
+
+        // 5. 執行下載 
+
+        XLSX.writeFile(wb, '系統櫃廢料統計表_修正版.xlsx'); 
+
+    } 
+
+    </script> 
+
+</body> 
+
+</html> 
