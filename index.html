@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>系統櫃廢料統計系統(手機優化版)</title>
+    <title>系統櫃廢料統計系統(精準現場版)</title>
     <!-- 引入 Excel 處理套件 -->
     <script src="https://jsdelivr.net"></script>
     <style>
@@ -11,15 +11,12 @@
         h2 { text-align: center; margin: 15px 0; font-size: 20px; color: #212529; }
         .box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .factory-title { font-size: 18px; font-weight: bold; color: #007bff; border-left: 5px solid #007bff; padding-left: 8px; margin: 15px 0 10px 0; }
-        .machine-row { display: flex; flex-direction: column; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e9ecef; }
-        .machine-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .machine-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e9ecef; }
         .machine-name { font-size: 16px; font-weight: bold; color: #495057; }
-        .counter { display: flex; align-items: center; gap: 5px; justify-content: flex-end; }
-        .btn-step { width: 45px; height: 45px; font-size: 22px; font-weight: bold; background: white; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .counter { display: flex; align-items: center; gap: 8px; }
+        .btn-step { width: 50px; height: 50px; font-size: 24px; font-weight: bold; background: white; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
         .btn-step:active { background: #e9ecef; }
-        .btn-quick { padding: 0 8px; height: 41px; font-size: 13px; font-weight: bold; background: #e8f4fd; color: #007bff; border: 1px solid #bfe0f9; border-radius: 6px; cursor: pointer; }
-        .btn-quick:active { background: #d0e8fc; }
-        .num-input { width: 55px; height: 41px; text-align: center; font-size: 18px; font-weight: bold; border: 1px solid #ced4da; border-radius: 6px; }
+        .num-input { width: 55px; height: 46px; text-align: center; font-size: 20px; font-weight: bold; border: 1px solid #ced4da; border-radius: 6px; background-color: #fff; color: #000; }
         .action-btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .table-wrap { overflow-x: auto; margin-top: 10px; border: 1px solid #666; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; background: white; }
@@ -28,28 +25,27 @@
     </style>
 </head>
 <body>
-    <h2>🪵 廠區廢料每日過數 (手機優化版)</h2>
+    <h2>🪵 廠區廢料每日過數 (1-2包精準版)</h2>
     
     <div class="box">
         <label style="font-weight:bold; font-size:16px;">選擇記錄日期：</label>
         <input type="date" id="recordDate" style="width:100%; padding:12px; font-size:16px; box-sizing:border-box; border-radius:6px; border:1px solid #ced4da; margin-top:5px; font-weight:bold;"><br>
 
         <div class="factory-title">E3 廠區</div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">330 機台</span></div><div class="counter"><button class="btn-step" onclick="step('E3_330',-1)">-</button><input type="number" id="E3_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E3_330',1)">+</button><button class="btn-quick" onclick="step('E3_330',5)">+5</button><button class="btn-quick" onclick="step('E3_330',10)">+10</button></div></div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">380 機台</span></div><div class="counter"><button class="btn-step" onclick="step('E3_380',-1)">-</button><input type="number" id="E3_380" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E3_380',1)">+</button><button class="btn-quick" onclick="step('E3_380',5)">+5</button><button class="btn-quick" onclick="step('E3_380',10)">+10</button></div></div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('E3_330',-1)">-</button><input type="number" id="E3_330" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('E3_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">380 機台</span><div class="counter"><button class="btn-step" onclick="step('E3_380',-1)">-</button><input type="number" id="E3_380" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('E3_380',1)">+</button></div></div>
         
         <div class="factory-title">E4 廠區</div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">330 機台</span></div><div class="counter"><button class="btn-step" onclick="step('E4_330',-1)">-</button><input type="number" id="E4_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_330',1)">+</button><button class="btn-quick" onclick="step('E4_330',5)">+5</button><button class="btn-quick" onclick="step('E4_330',10)">+10</button></div></div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">Nesting</span></div><div class="counter"><button class="btn-step" onclick="step('E4_Nesting',-1)">-</button><input type="number" id="E4_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_Nesting',1)">+</button><button class="btn-quick" onclick="step('E4_Nesting',5)">+5</button><button class="btn-quick" onclick="step('E4_Nesting',10)">+10</button></div></div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">長青 機台</span></div><div class="counter"><button class="btn-step" onclick="step('E4_長青',-1)">-</button><input type="number" id="E4_長青" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('E4_長青',1)">+</button><button class="btn-quick" onclick="step('E4_長青',5)">+5</button><button class="btn-quick" onclick="step('E4_長青',10)">+10</button></div></div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('E4_330',-1)">-</button><input type="number" id="E4_330" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('E4_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('E4_Nesting',-1)">-</button><input type="number" id="E4_Nesting" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('E4_Nesting',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">長青 機台</span><div class="counter"><button class="btn-step" onclick="step('E4_長青',-1)">-</button><input type="number" id="E4_長青" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('E4_長青',1)">+</button></div></div>
         
         <div class="factory-title">W8 廠區</div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">330 機台</span></div><div class="counter"><button class="btn-step" onclick="step('W8_330',-1)">-</button><input type="number" id="W8_330" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_330',1)">+</button><button class="btn-quick" onclick="step('W8_330',5)">+5</button><button class="btn-quick" onclick="step('W8_330',10)">+10</button></div></div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">Nesting</span></div><div class="counter"><button class="btn-step" onclick="step('W8_Nesting',-1)">-</button><input type="number" id="W8_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_Nesting',1)">+</button><button class="btn-quick" onclick="step('W8_Nesting',5)">+5</button><button class="btn-quick" onclick="step('W8_Nesting',10)">+10</button></div></div>
-        <div class="machine-row"><div class="machine-header"><span class="machine-name">邰展 機台</span></div><div class="counter"><button class="btn-step" onclick="step('W8_邰展',-1)">-</button><input type="number" id="W8_邰展" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_邰展',1)">+</button><button class="btn-quick" onclick="step('W8_邰展',5)">+5</button><button class="btn-quick" onclick="step('W8_邰展',10)">+10</button></div></div>
+        <div class="machine-row"><span class="machine-name">330 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_330',-1)">-</button><input type="number" id="W8_330" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('W8_330',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('W8_Nesting',-1)">-</button><input type="number" id="W8_Nesting" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('W8_Nesting',1)">+</button></div></div>
+        <div class="machine-row"><span class="machine-name">邰展 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_邰展',-1)">-</button><input type="number" id="W8_邰展" class="num-input" value="0" min="0" max="9"><button class="btn-step" onclick="step('W8_邰展',1)">+</button></div></div>
         
         <button class="action-btn" style="background-color:#28a745;" onclick="saveTodayData()">💾 儲存今日數據</button>
-        <button class="action-btn" style="background-color:#6c757d; padding:8px; font-size:14px;" onclick="resetCurrentForm()">🔄 清空目前輸入框</button>
         <button class="action-btn" style="background-color:#17a2b8; margin-top:25px;" onclick="exportToExcel()">🟢 匯出 Excel 檔案</button>
         <button class="action-btn" style="background-color:#dc3545; padding:8px; font-size:14px; margin-top:15px;" onclick="clearDatabase()">⚠️ 清除所有歷史記錄</button>
     </div>
@@ -71,7 +67,7 @@
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
     let db = JSON.parse(localStorage.getItem('waste_db')) || []; 
     
-    // 【優化：精準綁定台灣時區的今天】
+    // 預設鎖定台灣當天日期
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -80,7 +76,7 @@
     
     renderTable();
 
-    // 點擊大按鈕或快捷鍵加減功能
+    // 點擊加減功能
     function step(id, val) {
         const input = document.getElementById(id);
         let current = parseInt(input.value) || 0;
@@ -89,37 +85,46 @@
         input.value = current;
     }
 
-    // 【優化：一鍵歸零當前輸入內容】
-    function resetCurrentForm() {
-        if(confirm('確定要清空畫面上正在輸入的數字嗎？')) {
-            keys.forEach(k => document.getElementById(k).value = 0);
-        }
-    }
-
     // 儲存當天數據
     function saveTodayData() {
         const dateVal = document.getElementById('recordDate').value;
         if (!dateVal) return alert('❌ 請先選擇日期！');
         const dayStr = new Date(dateVal).getDate() + '日';
         
-        // 【優化：防呆驗證】檢查現場人員是否什麼都沒按就點儲存
         let hasData = false;
+        let hasAbnormalData = false; // 檢查是否有異常大於 2 包的資料
+        let abnormalMessage = '';
+
         const currentData = { date: dayStr };
         
         keys.forEach(k => {
             const v = parseInt(document.getElementById(k).value) || 0;
             if (v > 0) hasData = true;
+            
+            // 【新防呆核心】：如果輸入超過 2 包，觸發標記並記錄哪台機台有異常
+            if (v > 2) {
+                hasAbnormalData = true;
+                const nameText = k.replace('_', ' ');
+                abnormalMessage += `・${nameText} 輸入了 ${v} 包\n`;
+            }
+            
             currentData[k] = v === 0 ? '' : v;
         });
 
         if (!hasData) {
-            alert('⚠️ 目前所有機台數量都是 0，請先輸入數量再儲存喔！');
+            alert('⚠️ 目前所有機台數量都是 0，請先點選數量再儲存！');
             return;
+        }
+
+        // 【新防呆核心】：如果偵測到大於 2 包，跳出視窗讓現場人員進行二次確認
+        if (hasAbnormalData) {
+            const confirmAbnormal = confirm(`⚠️ 【異常數量提醒】\n\n偵測到以下機台數量大於 2 包：\n${abnormalMessage}\n平時一天通常不超過 2 包，請問這個數字確定正確無誤嗎？`);
+            if (!confirmAbnormal) return; // 如果現場人員按取消，就中斷儲存讓他修改
         }
 
         const idx = db.findIndex(i => i.date === dayStr);
         if (idx > -1) {
-            if(!confirm(`提醒：${dayStr} 已經有舊記錄了，確定要覆蓋更新它嗎？`)) return;
+            if(!confirm(`提醒：${dayStr} 已經有記錄了，確定要覆蓋它嗎？`)) return;
             db[idx] = currentData;
         } else {
             db.push(currentData);
@@ -131,7 +136,7 @@
         
         // 儲存成功後自動重設為 0
         keys.forEach(k => document.getElementById(k).value = 0);
-        alert(`✅ ${dayStr} 數據儲存成功！網頁關閉或手機重開也不會遺失。`);
+        alert(`✅ ${dayStr} 數據已成功存檔！`);
     }
 
     function renderTable() {
@@ -140,7 +145,6 @@
         db.forEach(item => {
             let html = `<tr><td><strong>${item.date}</strong></td>`;
             keys.forEach(k => {
-                // 如果是空值就給空白，有值就加粗顯示
                 html += `<td>${item[k]}</td>`;
             });
             html += '</tr>';
@@ -149,16 +153,16 @@
     }
 
     function clearDatabase() {
-        if (confirm('⚠️ 注意！確定要清空「所有天數」的歷史記錄嗎？\n\n清空後將無法復原，請確認您已經點綠色按鈕匯出 Excel 了！')) {
+        if (confirm('⚠️ 確定要清空所有天數的記錄嗎？\n清空後無法復原，請確認您已下載 Excel 檔案！')) {
             db = [];
             localStorage.removeItem('waste_db');
             renderTable();
-            alert('🗑️ 歷史記錄已全數安全清除！');
+            alert('🗑️ 歷史記錄已全數清除！');
         }
     }
 
     function exportToExcel() {
-        if (db.length === 0) return alert('❌ 目前沒有任何歷史數據可以匯出喔！');
+        if (db.length === 0) return alert('❌ 目前沒有任何數據可以匯出喔！');
         const wb = XLSX.utils.book_new();
         const wsData = [
             ['日期', '廢料', '', '', '', '', '', '', ''],
