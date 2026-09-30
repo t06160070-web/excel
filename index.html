@@ -63,7 +63,7 @@
             </table>
         </div>
     </div>
-    <script>
+     <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
     let db = JSON.parse(localStorage.getItem('waste_db')) || []; 
     
@@ -76,7 +76,6 @@
     
     renderTable();
 
-    // 點擊加減功能
     function step(id, val) {
         const input = document.getElementById(id);
         let current = parseInt(input.value) || 0;
@@ -85,41 +84,30 @@
         input.value = current;
     }
 
-    // 儲存當天數據
     function saveTodayData() {
         const dateVal = document.getElementById('recordDate').value;
         if (!dateVal) return alert('❌ 請先選擇日期！');
         const dayStr = new Date(dateVal).getDate() + '日';
         
         let hasData = false;
-        let hasAbnormalData = false; // 檢查是否有異常大於 2 包的資料
+        let hasAbnormalData = false;
         let abnormalMessage = '';
-
         const currentData = { date: dayStr };
         
         keys.forEach(k => {
             const v = parseInt(document.getElementById(k).value) || 0;
             if (v > 0) hasData = true;
-            
-            // 【新防呆核心】：如果輸入超過 2 包，觸發標記並記錄哪台機台有異常
             if (v > 2) {
                 hasAbnormalData = true;
-                const nameText = k.replace('_', ' ');
-                abnormalMessage += `・${nameText} 輸入了 ${v} 包\n`;
+                abnormalMessage += `・${k.replace('_', ' ')} 輸入了 ${v} 包\n`;
             }
-            
             currentData[k] = v === 0 ? '' : v;
         });
 
-        if (!hasData) {
-            alert('⚠️ 目前所有機台數量都是 0，請先點選數量再儲存！');
-            return;
-        }
+        if (!hasData) return alert('⚠️ 目前機台數量都是 0，請先輸入再儲存！');
 
-        // 【新防呆核心】：如果偵測到大於 2 包，跳出視窗讓現場人員進行二次確認
         if (hasAbnormalData) {
-            const confirmAbnormal = confirm(`⚠️ 【異常數量提醒】\n\n偵測到以下機台數量大於 2 包：\n${abnormalMessage}\n平時一天通常不超過 2 包，請問這個數字確定正確無誤嗎？`);
-            if (!confirmAbnormal) return; // 如果現場人員按取消，就中斷儲存讓他修改
+            if (!confirm(`⚠️ 【異常數量提醒】\n\n偵測到以下機台數量大於 2 包：\n${abnormalMessage}\n平時一天通常不超過 2 包，確定正確嗎？`)) return;
         }
 
         const idx = db.findIndex(i => i.date === dayStr);
@@ -133,8 +121,6 @@
         db.sort((a, b) => parseInt(a.date) - parseInt(b.date));
         localStorage.setItem('waste_db', JSON.stringify(db));
         renderTable();
-        
-        // 儲存成功後自動重設為 0
         keys.forEach(k => document.getElementById(k).value = 0);
         alert(`✅ ${dayStr} 數據已成功存檔！`);
     }
@@ -144,48 +130,58 @@
         tbody.innerHTML = '';
         db.forEach(item => {
             let html = `<tr><td><strong>${item.date}</strong></td>`;
-            keys.forEach(k => {
-                html += `<td>${item[k]}</td>`;
-            });
+            keys.forEach(k => html += `<td>${item[k]}</td>`);
             html += '</tr>';
             tbody.innerHTML += html;
         });
     }
 
     function clearDatabase() {
-        if (confirm('⚠️ 確定要清空所有天數的記錄嗎？\n清空後無法復原，請確認您已下載 Excel 檔案！')) {
+        if (confirm('⚠️ 確定要清空所有天的記錄嗎？清空後無法復原！')) {
             db = [];
             localStorage.removeItem('waste_db');
             renderTable();
-            alert('🗑️ 歷史記錄已全數清除！');
+            alert('🗑️ 歷史記錄已清除！');
         }
     }
 
+    // 【升級版匯出邏輯】
     function exportToExcel() {
-        if (db.length === 0) return alert('❌ 目前沒有任何數據可以匯出喔！');
-        const wb = XLSX.utils.book_new();
-        const wsData = [
-            ['日期', '廢料', '', '', '', '', '', '', ''],
-            ['', 'E3', '', 'E4', '', '', 'W8', '', ''],
-            ['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展']
-        ];
+        if (db.length === 0) return alert('❌ 目前沒有任何歷史數據可以匯出喔！請先輸入並儲存數據。');
         
-        db.forEach(item => {
-            const row = [item.date];
-            keys.forEach(k => row.push(item[k]));
-            wsData.push(row);
-        });
-        
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        ws['!merges'] = [
-            { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, 
-            { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, 
-            { s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, 
-            { s: { r: 1, c: 6 }, e: { r: 1, c: 8 } }  
-        ];
-        
-        XLSX.utils.book_append_sheet(wb, ws, '工作表1');
-        XLSX.writeFile(wb, '系統櫃廢料統計表.xlsx');
+        try {
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ['日期', '廢料', '', '', '', '', '', '', ''],
+                ['', 'E3', '', 'E4', '', '', 'W8', '', ''],
+                ['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展']
+            ];
+            
+            db.forEach(item => {
+                const row = [item.date];
+                keys.forEach(k => row.push(item[k]));
+                wsData.push(row);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            ws['!merges'] = [
+                { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, 
+                { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, 
+                { s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, 
+                { s: { r: 1, c: 6 }, e: { r: 1, c: 8 } }  
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, '工作表1');
+            XLSX.writeFile(wb, '系統櫃廢料統計表.xlsx');
+            
+        } catch (error) {
+            // 【備用救援機制】：若手機環境封鎖下載，直接彈出文字給人員複製發 LINE
+            let textBackup = "【系統櫃廢料統計文字備份】\n日期 | E3(330,380) | E4(330,Nest,長青) | W8(330,Nest,邰展)\n";
+            db.forEach(item => {
+                textBackup += `${item.date}: [${item.E3_330||0},${item.E3_380||0}] [${item.E4_330||0},${item.E4_Nesting||0},${item.E4_長青||0}] [${item.W8_330||0},${item.W8_Nesting||0},${item.W8_邰展||0}]\n`;
+            });
+            alert("💡 由於目前手機瀏覽器限制無法直接下載檔案，已為您將資料轉換為文字，請複製以下內容至 LINE 傳送：\n\n" + textBackup);
+        }
     }
     </script>
 </body>
