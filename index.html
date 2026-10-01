@@ -19,12 +19,14 @@
         table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; background: white; }
         th, td { border: 1px solid #666; padding: 8px; min-width: 48px; color: #000; }
         th { background-color: #e9ecef; font-weight: bold; }
+        .btn-edit { background: #ffc107; color: #212529; border: 1px solid #ffc107; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2>🪵 廠區廢料每日過數 (免連網秒開版)</h2>
+    <h2>🪵 廠區廢料每日過數 (修改與無產出優化版)</h2>
     <div class="box">
-        <label style="font-weight:bold; font-size:15px;">選擇記錄日期：</label>
+        <label style="font-weight:bold; font-size:15px; color:#28a745;" id="modeStatus">✨ 目前模式：全新輸入當天數據</label><br>
+        <label style="font-weight:bold; font-size:15px; display:block; margin-top:5px;">選擇記錄日期：</label>
         <input type="date" id="recordDate" style="width:100%; padding:10px; font-size:16px; box-sizing:border-box; border-radius:6px; border:1px solid #ced4da; margin-top:5px; font-weight:bold;"><br>
 
         <div class="factory-title">E3 廠區</div>
@@ -41,17 +43,18 @@
         <div class="machine-row"><span class="machine-name">Nesting</span><div class="counter"><button class="btn-step" onclick="step('W8_Nesting',-1)">-</button><input type="number" id="W8_Nesting" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_Nesting',1)">+</button></div></div>
         <div class="machine-row"><span class="machine-name">邰展 機台</span><div class="counter"><button class="btn-step" onclick="step('W8_邰展',-1)">-</button><input type="number" id="W8_邰展" class="num-input" value="0" min="0"><button class="btn-step" onclick="step('W8_邰展',1)">+</button></div></div>
         
-        <button class="action-btn" style="background-color:#28a745;" onclick="saveTodayData()">💾 儲存今日數據</button>
-        <button class="action-btn" style="background-color:#17a2b8; margin-top:20px;" onclick="exportToExcel()">🟢 一鍵下載 Excel 表格</button>
+        <button class="action-btn" style="background-color:#28a745;" onclick="saveTodayData(false)">💾 儲存今日數據</button>
+        <button class="action-btn" style="background-color:#6c757d; margin-top:5px; padding:8px; font-size:14px;" onclick="saveTodayData(true)">🛑 當天確定無廢料包 (記為0包)</button>
+        <button class="action-btn" style="background-color:#17a2b8; margin-top:25px;" onclick="exportToExcel()">🟢 一鍵下載 Excel 表格</button>
         <button class="action-btn" style="background-color:#dc3545; padding:6px; font-size:12px; margin-top:15px;" onclick="clearDatabase()">⚠️ 清除所有記錄</button>
     </div>
 
     <div class="box">
-        <h3 style="margin-top:0; font-size:15px;">歷史記錄預覽 (左右滑動)</h3>
+        <h3>歷史記錄預覽 (💡點擊黃色按鈕可回頭修改數據)</h3>
         <div class="table-wrap">
             <table id="excelTable">
                 <thead>
-                    <tr><th rowspan="3">日期</th><th colspan="8">廢料</th></tr>
+                    <tr><th rowspan="3">修改</th><th rowspan="3">日期</th><th colspan="8">廢料</th></tr>
                     <tr><th colspan="2">E3</th><th colspan="3">E4</th><th colspan="3">W8</th></tr>
                     <tr><th>330</th><th>380</th><th>330</th><th>Nesting</th><th>長青</th><th>330</th><th>Nesting</th><th>邰展</th></tr>
                 </thead>
@@ -59,14 +62,18 @@
             </table>
         </div>
     </div>
-
     <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
     let db = [];
-    try { db = JSON.parse(localStorage.getItem('waste_db_s22')) || []; } catch(e) { db = []; }
+    try { db = JSON.parse(localStorage.getItem('waste_db_v3')) || []; } catch(e) { db = []; }
 
+    // 設定台灣當天日期
     const now = new Date();
-    document.getElementById('recordDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const currentYear = now.getFullYear();
+    const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const currentDate = String(now.getDate()).padStart(2, '0');
+    const todayInputString = `${currentYear}-${currentMonth}-${currentDate}`;
+    document.getElementById('recordDate').value = todayInputString;
     renderTable();
 
     function step(id, val) {
@@ -77,45 +84,78 @@
         input.value = current;
     }
 
-    function saveTodayData() {
+    // 儲存或覆蓋數據的邏輯
+    function saveTodayData(forceZero) {
         const dateVal = document.getElementById('recordDate').value;
         if (!dateVal) return alert('請選擇日期');
-        const dayStr = new Date(dateVal).getDate() + '日';
+        
+        const dateObj = new Date(dateVal);
+        const dayStr = dateObj.getDate() + '日';
+        const formattedDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         
         let hasData = false;
         let hasAbnormal = false;
-        const currentData = { date: dayStr };
+        const currentData = { date: dayStr, fullDate: formattedDate };
         
         keys.forEach(k => {
-            const v = parseInt(document.getElementById(k).value) || 0;
+            const v = forceZero ? 0 : (parseInt(document.getElementById(k).value) || 0);
             if (v > 0) hasData = true;
             if (v > 2) hasAbnormal = true;
             currentData[k] = v === 0 ? '' : v;
         });
 
-        if (!hasData) return alert('⚠️ 請先輸入數量再儲存！');
-        if (hasAbnormal && !confirm('⚠️ 有機台輸入超過 2 包，確定正確嗎？')) return;
+        if (!forceZero && !hasData) return alert('⚠️ 請先輸入數量再儲存！如果當天確實沒有廢料包，請點選下方的「當天確定無廢料包」按鈕。');
+        if (!forceZero && hasAbnormal && !confirm('⚠️ 有機台輸入超過 2 包，確定正確嗎？')) return;
 
         const idx = db.findIndex(i => i.date === dayStr);
         if (idx > -1) {
-            if(!confirm(`確定要覆蓋 ${dayStr} 的資料嗎？`)) return;
+            if(!confirm(`確定要覆蓋、更新 ${dayStr} 的資料嗎？`)) return;
             db[idx] = currentData;
         } else {
             db.push(currentData);
         }
         
         db.sort((a, b) => parseInt(a.date) - parseInt(b.date));
-        localStorage.setItem('waste_db_s22', JSON.stringify(db));
+        localStorage.setItem('waste_db_v3', JSON.stringify(db));
         renderTable();
+        
+        // 狀態重設
         keys.forEach(k => document.getElementById(k).value = 0);
-        alert(`✅ ${dayStr} 儲存成功！`);
+        document.getElementById('recordDate').value = todayInputString;
+        document.getElementById('modeStatus').innerText = "✨ 目前模式：全新輸入當天數據";
+        document.getElementById('modeStatus').style.color = "#28a745";
+        alert(`✅ ${dayStr} 資料處理成功！`);
+    }
+
+    // 點擊歷史紀錄回頭修改
+    function editDay(dayString) {
+        const target = db.find(item => item.date === dayString);
+        if (!target) return;
+        
+        if (target.fullDate) {
+            document.getElementById('recordDate').value = target.fullDate;
+        } else {
+            const dNum = parseInt(dayString);
+            document.getElementById('recordDate').value = `${currentYear}-${currentMonth}-${String(dNum).padStart(2, '0')}`;
+        }
+        
+        keys.forEach(k => {
+            document.getElementById(k).value = target[k] === '' ? 0 : target[k];
+        });
+        
+        document.getElementById('modeStatus').innerText = `✏️ 目前模式：正在修改 ${dayString} 的舊資料 (儲存後將直接覆蓋)`;
+        document.getElementById('modeStatus').style.color = "#dc3545";
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         db.forEach(item => {
-            let html = `<tr><td><strong>${item.date}</strong></td>`;
+            let html = `<tr>
+                <td><button class="btn-edit" onclick="editDay('${item.date}')">修改</button></td>
+                <td><strong>${item.date}</strong></td>`;
             keys.forEach(k => html += `<td>${item[k]}</td>`);
             html += '</tr>';
             tbody.innerHTML += html;
@@ -125,21 +165,37 @@
     function clearDatabase() {
         if (confirm('確定要清空所有記錄嗎？')) {
             db = [];
-            localStorage.removeItem('waste_db_s22');
+            localStorage.removeItem('waste_db_v3');
             renderTable();
+            document.getElementById('modeStatus').innerText = "✨ 目前模式：全新輸入當天數據";
+            document.getElementById('modeStatus').style.color = "#28a745";
             alert('已清空！');
         }
     }
 
-    // 三星 S22 專用：免網路、100% 下載成功且完美的 Excel 轉檔機制
     function exportToExcel() {
         if (db.length === 0) return alert('❌ 目前沒有任何數據可以匯出喔！');
         
-        const tableHtml = document.getElementById('excelTable').outerHTML;
+        let rowsHtml = '';
+        db.forEach(item => {
+            rowsHtml += `<tr><td><strong>${item.date}</strong></td>`;
+            keys.forEach(k => rowsHtml += `<td>${item[k]}</td>`);
+            rowsHtml += '</tr>';
+        });
+
         const excelFile = `
             <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://w3.org">
             <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>工作表1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
-            <body>${tableHtml}</body>
+            <body>
+                <table border="1" style="text-align:center;">
+                    <thead>
+                        <tr><th rowspan="3">日期</th><th colspan="8">廢料</th></tr>
+                        <tr><th colspan="2">E3</th><th colspan="3">E4</th><th colspan="3">W8</th></tr>
+                        <tr><th>330</th><th>380</th><th>330</th><th>Nesting</th><th>長青</th><th>330</th><th>Nesting</th><th>邰展</th></tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            </body>
             </html>
         `;
 
