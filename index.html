@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>廠區廢料過數系統</title>
-    <!-- 【核心優化】：換上台灣最快、最穩定的 SheetJS 官方微型 CDN 節點，解決開啟卡頓問題 -->
-    <script src="https://sheetjs.com"></script>
+    <!-- 【核心修復】：改用穩定的 CDNJS 官方完整版 SheetJS，解決 XLSX is not defined 錯誤 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 10px; background: #f1f3f5; margin: 0; }
         h2 { text-align: center; margin: 12px 0; font-size: 19px; }
@@ -64,6 +64,7 @@
             </table>
         </div>
     </div>
+
     <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
     let db = [];
@@ -171,51 +172,54 @@
         }
     }
 
-    // 💡【終極相容技術】：經由 SheetJS 進行標準二進位封裝，輸出百分之百純合法的現代 .xlsx 檔案
+    // 💡【修正匯出邏輯】：修正多層級表頭的欄位合併範圍（!merges），完美輸出 .xlsx
     function exportToExcel() {
+        if (typeof XLSX === 'undefined') {
+            return alert('❌ 系統尚未載入 SheetJS 套件，請檢查網路連線！');
+        }
         if (db.length === 0) return alert('❌ 目前沒有任何數據可以匯出喔！');
         
-        // 1. 初始化一個純正的活頁簿
+        // 1. 初始化活頁簿
         const wb = XLSX.utils.book_new();
         
-        // 2. 建立完美的跨欄合併表頭數據
+        // 2. 建立 3 層對齊表頭數據 (A欄=日期, B~I欄對應 8 台機台)
         const wsData = [
             ['日期', '廢料', '', '', '', '', '', '', ''],
             ['', 'E3', '', 'E4', '', '', 'W8', '', ''],
             ['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展']
         ];
         
-        // 3. 將資料庫數值寫入
+        // 3. 將資料庫數值填入
         db.forEach(item => {
             const row = [item.date];
-            keys.forEach(k => row.push(item[k]));
+            keys.forEach(k => row.push(item[k] !== '' ? item[k] : ''));
             wsData.push(row);
         });
         
-        // 4. 定義儲存格跨欄合併範圍
+        // 4. 定義精確的跨欄合併範圍 (r=row, c=column，從 0 開始算)
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         ws['!merges'] = [
-            { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, // 廢料大標題 (B1:I1)
-            { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, // E3 (B2:C2)
-            { s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, // E4 (D2:F2)
-            { s: { r: 1, c: 6 }, e: { r: 1, c: 8 } }  // W8 (G2:I2)
+            { s: { r: 0, c: 0 }, e: { r: 2, c: 0 } }, // 日期欄向下合併 3 行 (A1:A3)
+            { s: { r: 0, c: 1 }, e: { r: 0, c: 8 } }, // 廢料大標題橫跨 B1 到 I1
+            { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, // E3 廠區橫跨 B2:C2
+            { s: { r: 1, c: 3 }, e: { r: 1, c: 5 } }, // E4 廠區橫跨 D2:F2
+            { s: { r: 1, c: 6 }, e: { r: 1, c: 8 } }  // W8 廠區橫跨 G2:I2
         ];
         
-        XLSX.utils.book_append_sheet(wb, ws, '工作表1');
+        XLSX.utils.book_append_sheet(wb, ws, '廢料統計');
         
-        // 5. 【核心修正】：強制採取 ArrayBuffer 二進位數組壓縮，生成完全符合微軟標準規格的真正 xlsx
+        // 5. 輸出 ArrayBuffer 格式並觸發下載
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
         
-        // 6. 強制調用原生 A 標籤下載，確保三星 S22 Chrome 完美儲存
         const a = document.createElement('a');
         a.href = url;
         a.download = '系統櫃廢料統計表.xlsx';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     </script>
 </body>
