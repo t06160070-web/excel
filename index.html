@@ -21,36 +21,10 @@
         th, td { border: 1px solid #666; padding: 8px; min-width: 48px; color: #000; }
         th { background-color: #e9ecef; font-weight: bold; }
         .btn-edit { background: #ffc107; color: #212529; border: 1px solid #ffc107; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; }
-
-        /* 💡 新增：手機友善的浮動提示框 (Toast Notification) 樣式 */
-        #toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(40, 167, 69, 0.95);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 15px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            opacity: 0;
-            z-index: 9999;
-            text-align: center;
-            pointer-events: none;
-            width: max-content;
-            max-width: 90%;
-        }
-        #toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
     </style>
 </head>
 <body>
-    <h2>🪵 廠區廢料每日過數 (正式 .xlsx 秒開版)</h2>
+    <h2>🪵 廠區廢料每日過數 (下載箭頭強制版)</h2>
     <div class="box">
         <label style="font-weight:bold; font-size:15px; color:#28a745;" id="modeStatus">✨ 目前模式：全新輸入當天數據</label><br>
         <label style="font-weight:bold; font-size:15px; display:block; margin-top:5px;">選擇記錄日期：</label>
@@ -89,9 +63,6 @@
             </table>
         </div>
     </div>
-
-    <!-- 💡 新增：浮動提示框 HTML 結構 -->
-    <div id="toast">✅ Excel 檔案已下載！請至手機「下載」資料夾查看</div>
 
     <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
@@ -199,16 +170,7 @@
         }
     }
 
-    // 💡 新增：顯示浮動提示框的輔助函式
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.innerText = message;
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3500); // 3.5秒後自動淡出
-    }
-
+    // 💡【下載箭頭強制優化版】：改用 Base64 Data URI 觸發手機瀏覽器的標準下載提示
     function exportToExcel() {
         if (typeof XLSX === 'undefined') {
             return alert('❌ 系統尚未載入 SheetJS 套件，請檢查網路連線！');
@@ -239,20 +201,19 @@
         
         XLSX.utils.book_append_sheet(wb, ws, '廢料統計');
         
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = URL.createObjectURL(blob);
+        // 1. 輸出為 base64 字串格式
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
         
+        // 2. 建立 Data URI 格式的下載連結
+        const dataUri = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
+        
+        // 3. 模擬點擊，強制叫出手機下載列與向下箭頭
         const a = document.createElement('a');
-        a.href = url;
+        a.href = dataUri;
         a.download = '系統櫃廢料統計表.xlsx';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-        // 💡 點擊後立即觸發畫面的醒目提示，給自己一個安心的回饋！
-        showToast('✅ 檔案已下載！請至手機「下載」資料夾查看');
     }
     </script>
 </body>
