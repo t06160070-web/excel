@@ -21,16 +21,10 @@
         th, td { border: 1px solid #666; padding: 8px; min-width: 48px; color: #000; }
         th { background-color: #e9ecef; font-weight: bold; }
         .btn-edit { background: #ffc107; color: #212529; border: 1px solid #ffc107; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        
-        /* 📊 統計小卡片區塊樣式 */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-        .stat-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 8px; text-align: center; }
-        .stat-title { font-size: 12px; color: #6c757d; font-weight: bold; }
-        .stat-value { font-size: 18px; color: #28a745; font-weight: bold; margin-top: 4px; }
     </style>
 </head>
 <body>
-    <h2>🪵 廠區廢料每日過數 (網頁即時統計版)</h2>
+    <h2>🪵 廠區廢料每日過數 (下載箭頭強制版)</h2>
     <div class="box">
         <label style="font-weight:bold; font-size:15px; color:#28a745;" id="modeStatus">✨ 目前模式：全新輸入當天數據</label><br>
         <label style="font-weight:bold; font-size:15px; display:block; margin-top:5px;">選擇記錄日期：</label>
@@ -52,29 +46,12 @@
         
         <button class="action-btn" style="background-color:#28a745;" onclick="saveTodayData(false)">💾 儲存今日數據</button>
         <button class="action-btn" style="background-color:#6c757d; margin-top:5px; padding:8px; font-size:14px;" onclick="saveTodayData(true)">🛑 當天確定無廢料包 (記為0包)</button>
-        <button class="action-btn" style="background-color:#17a2b8; margin-top:25px;" onclick="exportToExcel()">🟢 背景儲存 Excel 檔</button>
+        <button class="action-btn" style="background-color:#17a2b8; margin-top:25px;" onclick="exportToExcel()">🟢 一鍵下載真實 .xlsx 檔案</button>
         <button class="action-btn" style="background-color:#dc3545; padding:6px; font-size:12px; margin-top:15px;" onclick="clearDatabase()">⚠️ 清除所有記錄</button>
     </div>
 
-    <!-- 📊 數據總計看板與歷史明細 -->
     <div class="box">
-        <h3 style="margin-top:0; font-size:16px; color:#333;">📊 廠區廢料總計看板</h3>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-title">E3 廠總計</div>
-                <div class="stat-value" id="sumE3">0 包</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">E4 廠總計</div>
-                <div class="stat-value" id="sumE4">0 包</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">W8 廠總計</div>
-                <div class="stat-value" id="sumW8">0 包</div>
-            </div>
-        </div>
-
-        <h3 style="margin: 15px 0 8px 0; font-size:15px;">歷史記錄明細 (💡點擊黃色按鈕可修改)</h3>
+        <h3 style="margin-top:0; font-size:15px;">歷史記錄預覽 (💡點擊黃色按鈕可回頭修改數據)</h3>
         <div class="table-wrap">
             <table>
                 <thead>
@@ -83,7 +60,6 @@
                     <tr><th>330</th><th>380</th><th>330</th><th>Nesting</th><th>長青</th><th>330</th><th>Nesting</th><th>邰展</th></tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
-                <tfoot id="tableFoot" style="background-color: #f8f9fa; font-weight: bold;"></tfoot>
             </table>
         </div>
     </div>
@@ -91,7 +67,7 @@
     <script>
     const keys = ['E3_330', 'E3_380', 'E4_330', 'E4_Nesting', 'E4_長青', 'W8_330', 'W8_Nesting', 'W8_邰展'];
     let db = [];
-    try { db = JSON.parse(localStorage.getItem('waste_db_v8_stats')) || []; } catch(e) { db = []; }
+    try { db = JSON.parse(localStorage.getItem('waste_db_v6_true_xlsx')) || []; } catch(e) { db = []; }
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -140,14 +116,14 @@
         }
         
         db.sort((a, b) => parseInt(a.date) - parseInt(b.date));
-        localStorage.setItem('waste_db_v8_stats', JSON.stringify(db));
+        localStorage.setItem('waste_db_v6_true_xlsx', JSON.stringify(db));
         renderTable();
         
         keys.forEach(k => document.getElementById(k).value = 0);
         document.getElementById('recordDate').value = todayInputString;
         document.getElementById('modeStatus').innerText = "✨ 目前模式：全新輸入當天數據";
         document.getElementById('modeStatus').style.color = "#28a745";
-        alert(`✅ ${dayStr} 資料儲存成功！`);
+        alert(`✅ ${dayStr} 資料處理成功！`);
     }
 
     function editDay(dayString) {
@@ -165,51 +141,28 @@
             document.getElementById(k).value = target[k] === '' ? 0 : target[k];
         });
         
-        document.getElementById('modeStatus').innerText = `✏️ 目前模式：正在修改 ${dayString} 的舊資料`;
+        document.getElementById('modeStatus').innerText = `✏️ 目前模式：正在修改 ${dayString} 的舊資料 (儲存後將直接覆蓋)`;
         document.getElementById('modeStatus').style.color = "#dc3545";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderTable() {
         const tbody = document.getElementById('tableBody');
-        const tfoot = document.getElementById('tableFoot');
         tbody.innerHTML = '';
-        
-        let totals = { E3_330:0, E3_380:0, E4_330:0, E4_Nesting:0, E4_長青:0, W8_330:0, W8_Nesting:0, W8_邰展:0 };
-        let sumE3 = 0, sumE4 = 0, sumW8 = 0;
-
         db.forEach(item => {
             let html = `<tr>
                 <td><button class="btn-edit" onclick="editDay('${item.date}')">修改</button></td>
                 <td><strong>${item.date}</strong></td>`;
-            keys.forEach(k => {
-                let val = parseInt(item[k]) || 0;
-                totals[k] += val;
-                if(k.startsWith('E3')) sumE3 += val;
-                if(k.startsWith('E4')) sumE4 += val;
-                if(k.startsWith('W8')) sumW8 += val;
-                html += `<td>${item[k]}</td>`;
-            });
+            keys.forEach(k => html += `<td>${item[k]}</td>`);
             html += '</tr>';
             tbody.innerHTML += html;
         });
-
-        document.getElementById('sumE3').innerText = sumE3 + ' 包';
-        document.getElementById('sumE4').innerText = sumE4 + ' 包';
-        document.getElementById('sumW8').innerText = sumW8 + ' 包';
-
-        let footHtml = `<tr><td colspan="2">總計</td>`;
-        keys.forEach(k => {
-            footHtml += `<td>${totals[k]}</td>`;
-        });
-        footHtml += `</tr>`;
-        tfoot.innerHTML = footHtml;
     }
 
     function clearDatabase() {
         if (confirm('確定要清空所有記錄嗎？')) {
             db = [];
-            localStorage.removeItem('waste_db_v8_stats');
+            localStorage.removeItem('waste_db_v6_true_xlsx');
             renderTable();
             document.getElementById('modeStatus').innerText = "✨ 目前模式：全新輸入當天數據";
             document.getElementById('modeStatus').style.color = "#28a745";
@@ -217,9 +170,12 @@
         }
     }
 
+    // 💡【下載箭頭強制優化版】：改用 Base64 Data URI 觸發手機瀏覽器的標準下載提示
     function exportToExcel() {
-        if (typeof XLSX === 'undefined') return alert('❌ 尚未載入套件');
-        if (db.length === 0) return alert('❌ 沒有數據可匯出');
+        if (typeof XLSX === 'undefined') {
+            return alert('❌ 系統尚未載入 SheetJS 套件，請檢查網路連線！');
+        }
+        if (db.length === 0) return alert('❌ 目前沒有任何數據可以匯出喔！');
         
         const wb = XLSX.utils.book_new();
         const wsData = [
@@ -227,6 +183,7 @@
             ['', 'E3', '', 'E4', '', '', 'W8', '', ''],
             ['', '330', '380', '330', 'Nesting', '長青', '330', 'Nesting', '邰展']
         ];
+        
         db.forEach(item => {
             const row = [item.date];
             keys.forEach(k => row.push(item[k] !== '' ? item[k] : ''));
@@ -243,8 +200,20 @@
         ];
         
         XLSX.utils.book_append_sheet(wb, ws, '廢料統計');
-        XLSX.writeFile(wb, '系統櫃廢料統計表.xlsx');
-        alert('✅ Excel 檔案已在背景生成並儲存至手機！');
+        
+        // 1. 輸出為 base64 字串格式
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        
+        // 2. 建立 Data URI 格式的下載連結
+        const dataUri = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wbout;
+        
+        // 3. 模擬點擊，強制叫出手機下載列與向下箭頭
+        const a = document.createElement('a');
+        a.href = dataUri;
+        a.download = '系統櫃廢料統計表.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
     </script>
 </body>
